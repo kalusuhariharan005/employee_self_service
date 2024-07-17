@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from .import views
 
 
@@ -10,7 +10,9 @@ urlpatterns = [
     path('create-user/',views.register_user_view,name='register'),
     path('user/change-password/',views.changepassword,name='changepassword'),
     # path('user/profile/view/',views.user_profile_view,name='userprofile'),
-   
+    
+    path('attendance/', include('attendance.urls')),
+
 
     #Users Views
     path('users/all',views.users_list,name='users'),

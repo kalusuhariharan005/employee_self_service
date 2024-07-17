@@ -113,6 +113,8 @@
             </div>
 
             <ul class="nav">
+
+                
                 <li class="active">
                     <a href="{% url 'dashboard:dashboard' %}">
                         <i class="pe-7s-graph"></i>
@@ -125,7 +127,14 @@
                         <p>Home</p>
                     </a>
                 </li> -->
-                
+                <li>
+                    {% if request.user.is_superuser %}<a href="{% url 'dashboard:leaveslist' %}">{% else %}<a href="{% url 'dashboard:staffleavetable' %}"> {% endif %}
+                        <i class="pe-7s-user"></i>
+                        <p>Proile </p>
+                    </a>
+                </li>
+
+
                 {% if request.user.is_superuser and request.user.is_staff %}
                 <li>
                     <a href="{% url 'dashboard:employees' %}">
@@ -142,6 +151,12 @@
                     </a>
                 </li>
                 
+                <li>
+                    {% if request.user.is_superuser %}<a href="{% url 'dashboard:leaveslist' %}">{% else %}<a href="{% url 'dashboard:staffleavetable' %}"> {% endif %}
+                        <i class="pe-7s-date"></i>
+                        <p>Attendance Section</p>
+                    </a>
+                </li>
             </ul>
     	</div>
 

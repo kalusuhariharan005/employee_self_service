@@ -1,11 +1,12 @@
 # dashboard/urls.py
-from django.urls import path
+from django.urls import path,include
 from . import views
 
 app_name = 'dashboard'
 
 urlpatterns = [
     path('welcome/', views.dashboard, name='dashboard'),
+    path('attendance/', include('attendance.urls')),
 
     # Employee
     path('employees/all/', views.dashboard_employees, name='employees'),
