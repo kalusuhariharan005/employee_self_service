@@ -152,7 +152,11 @@
                 </li>
                 
                 <li>
-                    {% if request.user.is_superuser %}<a href="{% url 'dashboard:leaveslist' %}">{% else %}<a href="{% url 'dashboard:staffleavetable' %}"> {% endif %}
+                    {% if request.user.is_superuser %}
+                    <a href="{% url 'dashboard:attendance_section' %}">
+                    {% else %}
+                    <a href="{% url 'dashboard:attendance_section' %}">
+                    {% endif %}
                         <i class="pe-7s-date"></i>
                         <p>Attendance Section</p>
                     </a>

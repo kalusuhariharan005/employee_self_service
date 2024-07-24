@@ -11,39 +11,49 @@ from leave.models import Leave
 from employee.models import Employee, Department, Religion, Nationality, Role
 from leave.forms import LeaveCreationForm
 
+# Helper function to handle employee form
+def handle_employee_form(request, form, employee=None):
+    if form.is_valid():
+        instance = form.save(commit=False)
+        if employee:
+            instance.id = employee.id
+        instance.user = User.objects.get(id=request.POST.get('user'))
+        instance.title = request.POST.get('title')
+        instance.image = request.FILES.get('image')
+        instance.firstname = request.POST.get('firstname')
+        instance.lastname = request.POST.get('lastname')
+        instance.othername = request.POST.get('othername')
+        instance.birthday = request.POST.get('birthday')
+        instance.role = Role.objects.get(id=request.POST.get('role'))
+        instance.startdate = request.POST.get('startdate')
+        instance.employeetype = request.POST.get('employeetype')
+        instance.employeeid = request.POST.get('employeeid')
+        instance.dateissued = request.POST.get('dateissued')
+        instance.save()
+        return True, None
+    return False, form.errors
+
+# Dashboard view
 def dashboard(request):
-    '''
-    Summary of all apps - display here with charts etc.
-    eg. LEAVE - PENDING|APPROVED|RECENT|REJECTED - TOTAL THIS MONTH or NEXT MONTH
-    EMPLOYEE - TOTAL | GENDER 
-    CHART - AVERAGE EMPLOYEE AGES
-    '''
     if not request.user.is_authenticated:
         return redirect('accounts:login')
 
-    dataset = dict()
-    user = request.user
-
-    employees = Employee.objects.all()
-    leaves = Leave.objects.all_pending_leaves()
-    staff_leaves = Leave.objects.filter(user=user)
-
-    dataset['employees'] = employees
-    dataset['leaves'] = leaves
-    dataset['staff_leaves'] = staff_leaves
-    dataset['title'] = 'summary'
-
+    dataset = {
+        'employees': Employee.objects.all(),
+        'leaves': Leave.objects.all_pending_leaves(),
+        'staff_leaves': Leave.objects.filter(user=request.user),
+        'title': 'summary'
+    }
     return render(request, 'dashboard/dashboard_index.html', dataset)
 
+# Employees list view with pagination
 def dashboard_employees(request):
     if not (request.user.is_authenticated and request.user.is_superuser and request.user.is_staff):
         return redirect('/')
 
-    dataset = dict()
     departments = Department.objects.all()
     employees = Employee.objects.all()
-
-    # Pagination
+    
     query = request.GET.get('search')
     if query:
         employees = employees.filter(
@@ -51,7 +61,7 @@ def dashboard_employees(request):
             Q(lastname__icontains=query)
         )
 
-    paginator = Paginator(employees, 10)  # Show 10 employee lists per page
+    paginator = Paginator(employees, 10)  # Show 10 employees per page
     page = request.GET.get('page')
     try:
         employees_paginated = paginator.get_page(page)
@@ -62,43 +72,23 @@ def dashboard_employees(request):
 
     blocked_employees = Employee.objects.all_blocked_employees()
 
-    dataset['departments'] = departments
-    dataset['employees'] = employees_paginated
-    dataset['blocked_employees'] = blocked_employees
-    dataset['title'] = 'Employees'
-
+    dataset = {
+        'departments': departments,
+        'employees': employees_paginated,
+        'blocked_employees': blocked_employees,
+        'title': 'Employees'
+    }
     return render(request, 'dashboard/employee_app.html', dataset)
 
+# Employee creation view
 def dashboard_employees_create(request):
     if not (request.user.is_authenticated and request.user.is_superuser and request.user.is_staff):
         return redirect('/')
 
     if request.method == 'POST':
         form = EmployeeCreateForm(request.POST, request.FILES)
-        if form.is_valid():
-            instance = form.save(commit=False)
-            user = request.POST.get('user')
-            assigned_user = User.objects.get(id=user)
-            instance.user = assigned_user
-
-            instance.title = request.POST.get('title')
-            instance.image = request.FILES.get('image')
-            instance.firstname = request.POST.get('firstname')
-            instance.lastname = request.POST.get('lastname')
-            instance.othername = request.POST.get('othername')
-            instance.birthday = request.POST.get('birthday')
-
-            role = request.POST.get('role')
-            role_instance = Role.objects.get(id=role)
-            instance.role = role_instance
-
-            instance.startdate = request.POST.get('startdate')
-            instance.employeetype = request.POST.get('employeetype')
-            instance.employeeid = request.POST.get('employeeid')
-            instance.dateissued = request.POST.get('dateissued')
-
-            instance.save()
-
+        success, errors = handle_employee_form(request, form)
+        if success:
             messages.success(request, 'Employee created successfully.', extra_tags='alert alert-success alert-dismissible show')
             return redirect('dashboard:employees')
         else:
@@ -112,6 +102,7 @@ def dashboard_employees_create(request):
     }
     return render(request, 'dashboard/employee_create.html', dataset)
 
+# Employee edit view
 def employee_edit_data(request, id):
     if not (request.user.is_authenticated and request.user.is_superuser and request.user.is_staff):
         return redirect('/')
@@ -119,50 +110,8 @@ def employee_edit_data(request, id):
     employee = get_object_or_404(Employee, id=id)
     if request.method == 'POST':
         form = EmployeeCreateForm(request.POST or None, request.FILES or None, instance=employee)
-        if form.is_valid():
-            instance = form.save(commit=False)
-            user = request.POST.get('user')
-            assigned_user = User.objects.get(id=user)
-            instance.user = assigned_user
-
-            instance.image = request.FILES.get('image')
-            instance.firstname = request.POST.get('firstname')
-            instance.lastname = request.POST.get('lastname')
-            instance.othername = request.POST.get('othername')
-            instance.birthday = request.POST.get('birthday')
-
-            religion_id = request.POST.get('religion')
-            religion = Religion.objects.get(id=religion_id)
-            instance.religion = religion
-
-            nationality_id = request.POST.get('nationality')
-            nationality = Nationality.objects.get(id=nationality_id)
-            instance.nationality = nationality
-
-            department_id = request.POST.get('department')
-            department = Department.objects.get(id=department_id)
-            instance.department = department
-
-            instance.hometown = request.POST.get('hometown')
-            instance.region = request.POST.get('region')
-            instance.residence = request.POST.get('residence')
-            instance.address = request.POST.get('address')
-            instance.education = request.POST.get('education')
-            instance.lastwork = request.POST.get('lastwork')
-            instance.position = request.POST.get('position')
-            instance.ssnitnumber = request.POST.get('ssnitnumber')
-            instance.tinnumber = request.POST.get('tinnumber')
-
-            role = request.POST.get('role')
-            role_instance = Role.objects.get(id=role)
-            instance.role = role_instance
-
-            instance.startdate = request.POST.get('startdate')
-            instance.employeetype = request.POST.get('employeetype')
-            instance.employeeid = request.POST.get('employeeid')
-            instance.dateissued = request.POST.get('dateissued')
-
-            instance.save()
+        success, errors = handle_employee_form(request, form, employee)
+        if success:
             messages.success(request, 'Employee updated successfully.', extra_tags='alert alert-success alert-dismissible show')
             return redirect('dashboard:employees')
         else:
@@ -172,10 +121,11 @@ def employee_edit_data(request, id):
     form = EmployeeCreateForm(request.POST or None, request.FILES or None, instance=employee)
     dataset = {
         'form': form,
-        'title': f'Edit - {employee.get_full_name()}'
+        'title': f'Edit - {employee.get_full_name()}' if callable(getattr(employee, 'get_full_name', None)) else 'Edit Employee'
     }
     return render(request, 'dashboard/employee_create.html', dataset)
 
+# Employee info view
 def dashboard_employee_info(request, id):
     if not request.user.is_authenticated:
         return redirect('/')
@@ -183,12 +133,11 @@ def dashboard_employee_info(request, id):
     employee = get_object_or_404(Employee, id=id)
     dataset = {
         'employee': employee,
-        'title': f'Profile - {employee.get_full_name()}'
+        'title': f'Profile - {employee.get_full_name()}' if callable(getattr(employee, 'get_full_name', None)) else 'Employee Profile'
     }
     return render(request, 'dashboard/employee_detail.html', dataset)
 
-# ---------------------LEAVE-------------------------------------------
-
+# Leave creation view
 def leave_creation(request):
     if not request.user.is_authenticated:
         return redirect('accounts:login')
@@ -212,6 +161,7 @@ def leave_creation(request):
     }
     return render(request, 'dashboard/create_leave.html', dataset)
 
+# List of pending leaves
 def leaves_list(request):
     if not (request.user.is_staff and request.user.is_superuser):
         return redirect('/')
@@ -223,6 +173,7 @@ def leaves_list(request):
     }
     return render(request, 'dashboard/leaves_recent.html', dataset)
 
+# List of approved leaves
 def leaves_approved_list(request):
     if not (request.user.is_superuser and request.user.is_staff):
         return redirect('/')
@@ -234,6 +185,7 @@ def leaves_approved_list(request):
     }
     return render(request, 'dashboard/leaves_approved.html', dataset)
 
+# View for leave details
 def leaves_view(request, id):
     if not request.user.is_authenticated:
         return redirect('accounts:login')
@@ -243,7 +195,7 @@ def leaves_view(request, id):
 
     if not employee:
         messages.error(request, 'Employee not found.', extra_tags='alert alert-warning alert-dismissible show')
-        return redirect('dashboard:leaveslist')  # Use 'leaveslist' here
+        return redirect('dashboard:leaveslist')
 
     dataset = {
         'leave': leave,
@@ -252,6 +204,7 @@ def leaves_view(request, id):
     }
     return render(request, 'dashboard/leave_detail_view.html', dataset)
 
+# Approve leave
 def approve_leave(request, id):
     if not (request.user.is_superuser and request.user.is_authenticated):
         return redirect('/')
@@ -261,32 +214,38 @@ def approve_leave(request, id):
 
     if not employee:
         messages.error(request, 'Employee not found.', extra_tags='alert alert-warning alert-dismissible show')
-        return redirect('dashboard:leaveslist')  # Use 'leaveslist' here
+        return redirect('dashboard:leaveslist')
 
-    leave.approve_leave()  # Make sure this method updates the leave status properly
+    leave.approve_leave()  # Ensure this method updates the leave status properly
 
-    messages.success(request, f'Leave successfully approved for {employee.get_full_name()}.', extra_tags='alert alert-success alert-dismissible show')
+    # Ensure get_full_name is callable
+    full_name = employee.get_full_name() if callable(getattr(employee, 'get_full_name', None)) else "Employee"
+
+    messages.success(request, f'Leave successfully approved for {full_name}.', extra_tags='alert alert-success alert-dismissible show')
     return redirect('dashboard:userleaveview', id=id)
 
+# Cancel leave
 def cancel_leave(request, id):
     if not (request.user.is_superuser and request.user.is_authenticated):
         return redirect('/')
 
     leave = get_object_or_404(Leave, id=id)
-    leave.cancel_leave()  # Make sure this method updates the leave status properly
+    leave.cancel_leave()  # Ensure this method updates the leave status properly
 
     messages.success(request, 'Leave is canceled.', extra_tags='alert alert-success alert-dismissible show')
     return redirect('dashboard:canceleaveslist')
 
+# Unapprove leave
 def unapprove_leave(request, id):
     if not (request.user.is_authenticated and request.user.is_superuser):
         return redirect('/')
 
     leave = get_object_or_404(Leave, id=id)
-    leave.unapprove_leave()  # Make sure this method updates the leave status properly
+    leave.unapprove_leave()  # Ensure this method updates the leave status properly
 
-    return redirect('dashboard:leaveslist')  # Use 'leaveslist' here
+    return redirect('dashboard:leaveslist')
 
+# List of canceled leaves
 def cancel_leaves_list(request):
     if not (request.user.is_superuser and request.user.is_authenticated):
         return redirect('/')
@@ -298,8 +257,9 @@ def cancel_leaves_list(request):
     }
     return render(request, 'dashboard/leaves_cancel.html', dataset)
 
+# Uncancel leave
 def uncancel_leave(request, id):
-    if not (request.user.is_superuser and request.user.is_authenticated):
+    if not request.user.is_superuser:
         return redirect('/')
 
     leave = get_object_or_404(Leave, id=id)
@@ -310,6 +270,7 @@ def uncancel_leave(request, id):
     messages.success(request, 'Leave is uncanceled and now in the pending list.', extra_tags='alert alert-success alert-dismissible show')
     return redirect('dashboard:canceleaveslist')
 
+# List of rejected leaves
 def leave_rejected_list(request):
     leaves = Leave.objects.all_rejected_leaves()
     dataset = {
@@ -318,13 +279,15 @@ def leave_rejected_list(request):
     }
     return render(request, 'dashboard/rejected_leaves_list.html', dataset)
 
+# Reject leave
 def reject_leave(request, id):
     leave = get_object_or_404(Leave, id=id)
-    leave.reject_leave()  # Make sure this method updates the leave status properly
+    leave.reject_leave()  # Ensure this method updates the leave status properly
 
     messages.success(request, 'Leave is rejected.', extra_tags='alert alert-success alert-dismissible show')
     return redirect('dashboard:leavesrejected')
 
+# Unreject leave
 def unreject_leave(request, id):
     leave = get_object_or_404(Leave, id=id)
     leave.status = 'pending'
@@ -334,6 +297,7 @@ def unreject_leave(request, id):
     messages.success(request, 'Leave is now in the pending list.', extra_tags='alert alert-success alert-dismissible show')
     return redirect('dashboard:leavesrejected')
 
+# View for current user's leave
 def view_my_leave_table(request):
     if request.user.is_authenticated:
         user = request.user
@@ -352,3 +316,7 @@ def view_my_leave_table(request):
         return render(request, 'dashboard/staff_leaves_table.html', dataset)
     else:
         return redirect('accounts:login')
+
+# Attendance section view
+def attendance_section(request):
+    return render(request, 'dashboard/attendance_section.html')

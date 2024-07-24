@@ -1,0 +1,42 @@
+{% extends 'index.html' %}
+
+{% block title %}Attendance Section{% endblock %}
+
+{% block content %}
+<div class="container-fluid container-centered-items">
+    <section class="row">
+        <section class="col col-lg-12 text-center">
+            <h2>Attendance Section</h2>
+            <p>Welcome to the Attendance Section. Here you can manage and view your attendance records.</p>
+
+            <!-- Example Table for Attendance Records -->
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Check-In</th>
+                            <th>Check-Out</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.check_in }}</td>
+                            <td>{{ record.check_out }}</td>
+                            <td>{{ record.status }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No attendance records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+</div>
+{% endblock %}

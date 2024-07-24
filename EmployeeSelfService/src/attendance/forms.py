@@ -4,4 +4,4 @@ from .models import Attendance
 class AttendanceForm(forms.ModelForm):
     class Meta:
         model = Attendance
-        fields = ['date', 'check_in', 'check_out']
+        fields = ['status']

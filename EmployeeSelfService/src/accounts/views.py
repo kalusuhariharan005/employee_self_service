@@ -58,37 +58,32 @@ def register_user_view(request):
 	return render(request,'accounts/register.html',dataset)
 
 
-
-
 def login_view(request):
-	'''
-	work on me - needs messages and redirects
-	
-	'''
-	login_user = request.user
-	if request.method == 'POST':
-		form = UserLogin(data = request.POST)
-		if form.is_valid():
-			username = request.POST.get('username')
-			password = request.POST.get('password')
+    '''
+    Handles user login.
+    '''
+    if request.method == 'POST':
+        form = UserLogin(data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
 
-			user = authenticate(request, username = username, password = password)
-			if user and user.is_active:
-				login(request,user)
-				if login_user.is_authenticated:
-					return redirect('dashboard:dashboard')
-			else:
-			    messages.error(request,'Account is invalid',extra_tags = 'alert alert-error alert-dismissible show' )
-			    return redirect('accounts:login')
+            user = authenticate(request, username=username, password=password)
+            if user is not None and user.is_active:
+                login(request, user)
+                return redirect('dashboard:dashboard')  # Redirect to the dashboard
+            else:
+                messages.error(request, 'Invalid username or password', extra_tags='alert alert-error alert-dismissible show')
+                return redirect('accounts:login')
+        else:
+            messages.error(request, 'Form data not valid', extra_tags='alert alert-error alert-dismissible show')
+            return redirect('accounts:login')
 
-		else:
-			return HttpResponse('data not valid')
+    else:
+        form = UserLogin()
 
-	dataset=dict()
-	form = UserLogin()
+    return render(request, 'accounts/login.html', {'form': form})
 
-	dataset['form'] = form
-	return render(request,'accounts/login.html',dataset)
 
 
 

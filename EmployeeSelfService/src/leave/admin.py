@@ -1,7 +1,10 @@
+# leave/admin.py
 from django.contrib import admin
-from .models import Leave
-# from .models import Comment
+from leave.models import Leave
 
+class LeaveAdmin(admin.ModelAdmin):
+    list_display = ('user', 'startdate', 'enddate', 'leavetype', 'status', 'created', 'updated')
+    search_fields = ('user__username', 'leavetype', 'status')
+    list_filter = ('leavetype', 'status')
 
-admin.site.register(Leave)
-# admin.site.register(Comment)
+admin.site.register(Leave, LeaveAdmin)

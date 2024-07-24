@@ -11,7 +11,7 @@ urlpatterns = [
     path('user/change-password/',views.changepassword,name='changepassword'),
     # path('user/profile/view/',views.user_profile_view,name='userprofile'),
     
-    path('attendance/', include('attendance.urls')),
+   # path('attendance/', include('attendance.urls')),
 
 
     #Users Views
