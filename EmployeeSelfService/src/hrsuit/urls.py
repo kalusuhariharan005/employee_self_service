@@ -20,11 +20,11 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),  # Change URL in production --> rabotecsuits.com/_&_wysiwyg-suits_empty-link_url
+    path('admin/', admin.site.urls), 
     path('', views.index_view, name='home'),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('dashboard/', include('dashboard.urls', namespace='dashboard')),
-    path('attendance/', include('attendance.urls', namespace='attendance')),  # Add this line to include attendance URLs
+    path('attendance/', include('attendance.urls', namespace='attendance')),
 ]
 
 if settings.DEBUG:

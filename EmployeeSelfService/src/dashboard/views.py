@@ -8,10 +8,9 @@ from django.db.models import Q
 
 from employee.forms import EmployeeCreateForm
 from leave.models import Leave
-from employee.models import Employee, Department, Religion, Nationality, Role
+from employee.models import Employee, Department, Nationality, Role
 from leave.forms import LeaveCreationForm
 
-# Helper function to handle employee form
 def handle_employee_form(request, form, employee=None):
     if form.is_valid():
         instance = form.save(commit=False)
@@ -38,13 +37,19 @@ def dashboard(request):
     if not request.user.is_authenticated:
         return redirect('accounts:login')
 
+    try:
+        pending_leaves = Leave.objects.all_pending_leaves()
+    except AttributeError as e:
+        print(f"Error: {e}")
+
     dataset = {
         'employees': Employee.objects.all(),
-        'leaves': Leave.objects.all_pending_leaves(),
+        'leaves': pending_leaves,
         'staff_leaves': Leave.objects.filter(user=request.user),
         'title': 'summary'
     }
     return render(request, 'dashboard/dashboard_index.html', dataset)
+
 
 # Employees list view with pagination
 def dashboard_employees(request):

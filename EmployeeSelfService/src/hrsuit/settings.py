@@ -76,23 +76,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'hrsuit.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'djongo',
-        'NAME': 'employemanagement',
-        'ENFORCE_SCHEMA': False,
-        'CLIENT': {
-            'host': 'localhost',
-            'port': 27017,  # Default MongoDB port
-            # Uncomment and set these fields if authentication is required
-            # 'username': 'your_mongodb_username',
-            # 'password': 'your_mongodb_password',
-            # 'authSource': 'your_auth_source',
-            # 'authMechanism': 'SCRAM-SHA-1',
-        },
-    }
-}
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'djongo',
+#        'NAME': 'employemanagement',
+#        'ENFORCE_SCHEMA': False,
+#        'CLIENT': {
+#            'host': 'localhost',
+#            'port': 27017,
 
+#        },
+#    }
+# }
+
+DATABASES = {
+     'default': {
+         'ENGINE': 'django.db.backends.sqlite3',
+         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+     }
+}
 
 
 # Password validation
